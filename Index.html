@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F3F5F8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --page:#E9EDF2; --paper:#FFFFFF; --ink:#0F1726; --slate:#5B6676; --hair:#E3E7ED;
+  --night:#0A1430; --night2:#16285A; --ice:#BFE6FF; --sky:#5AA9FF; --alpine:#3157F5;
+  --gain:#14A37A; --gain2:#6EE7B7; --loss:#E2484D; --loss2:#FF8A8E;
+  --num:'Barlow Condensed', Pretendard, sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --lift:0 1px 1px rgba(15,23,38,.04),0 4px 10px -4px rgba(15,23,38,.06),0 18px 40px -18px rgba(15,23,38,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;color:var(--ink);font-family:Pretendard,-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:linear-gradient(180deg,#F3F5F8 0%,var(--page) 60%,#E3E8EE 100%);min-height:100vh}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--alpine);outline-offset:2px}
+.app{max-width:440px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 14px calc(36px + env(safe-area-inset-bottom))}
+.n{font-family:var(--num);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+
+/* ===== 히어로: 야간 알파인 문자판 ===== */
+.hero{position:relative;border-radius:32px;overflow:hidden;color:#fff;padding:22px 22px 58px;
+  background:
+    radial-gradient(120% 70% at 50% 38%,rgba(90,169,255,.28) 0%,rgba(90,169,255,0) 60%),
+    radial-gradient(80% 50% at 100% 0%,rgba(49,87,245,.35) 0%,rgba(49,87,245,0) 70%),
+    linear-gradient(170deg,var(--night2) 0%,var(--night) 70%);
+  box-shadow:0 30px 60px -28px rgba(10,20,48,.65),0 10px 20px -12px rgba(10,20,48,.4),inset 0 1px 0 rgba(255,255,255,.12)}
+.hero::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 30%);}
+.ridge{position:absolute;left:0;right:0;bottom:0;width:100%;height:64px;pointer-events:none;opacity:.9}
+.top{position:relative;display:flex;justify-content:space-between;align-items:flex-start;z-index:1}
+.day{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.day small{display:block;font-size:13px;font-weight:500;color:rgba(255,255,255,.6);letter-spacing:0;margin-top:3px}
+.tally{display:flex;align-items:center;gap:8px;padding:7px 12px 7px 14px;border-radius:999px;font-size:12px;color:rgba(255,255,255,.72);
+  background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.tally b{font-family:var(--num);font-size:17px;font-weight:600;color:#fff}
+
+.dial{position:relative;width:min(290px,76vw);aspect-ratio:1;margin:14px auto 0;z-index:1}
+.dial svg{width:100%;height:100%;display:block;overflow:visible}
+.seg{fill:rgba(255,255,255,.09)}
+.seg.on{fill:url(#gFill);opacity:0;animation:segIn .5s var(--ease) forwards}
+.seg.now{fill:#fff;animation:pulse 2s ease-in-out infinite}
+.ot{fill:url(#gOver);opacity:0;animation:segIn .5s var(--ease) forwards}
+.hr{fill:rgba(255,255,255,.35)}
+@keyframes segIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+.core{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.core .cap{font-size:12.5px;color:rgba(255,255,255,.62);letter-spacing:.02em}
+.core .big{font-family:var(--num);font-weight:600;font-size:84px;line-height:.92;margin-top:6px;letter-spacing:-.01em;
+  background:linear-gradient(180deg,#FFFFFF 30%,#B9D2FF 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.core .big.gain{background-image:linear-gradient(180deg,#FFFFFF 10%,var(--gain2) 100%)}
+.core .big.loss{background-image:linear-gradient(180deg,#FFFFFF 10%,var(--loss2) 100%)}
+.core .unit{font-size:30px;font-weight:500;margin-left:3px}
+.core .sub{margin-top:12px;font-size:12.5px;font-weight:600;color:#fff;padding:6px 12px;border-radius:999px;
+  background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.core .sub b{font-family:var(--num);font-size:15px;font-weight:600;margin-right:2px}
+
+.punches{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1px 1fr;align-items:center;margin:16px 6px 0}
+.punches .rule{height:34px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.25),transparent)}
+.pc{text-align:center}
+.pc span{display:block;font-size:12px;color:rgba(255,255,255,.58)}
+.pc b{font-family:var(--num);font-size:32px;font-weight:600;line-height:1.1;color:#fff}
+.pc b.empty{color:rgba(255,255,255,.28)}
+
+/* ===== 메인 버튼: 히어로 하단에 걸쳐 띄움 ===== */
+.cta-wrap{position:relative;margin:-30px 12px 0;z-index:2}
+.cta{width:100%;height:62px;border-radius:31px;color:#fff;font-size:17px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:linear-gradient(180deg,#4A6DFF 0%,var(--alpine) 55%,#2444D8 100%);
+  box-shadow:0 14px 28px -12px rgba(49,87,245,.75),0 4px 10px -4px rgba(49,87,245,.5),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 0 rgba(0,0,0,.12);
+  transition:transform .15s var(--ease),box-shadow .2s}
+.cta:active{transform:translateY(1px) scale(.985)}
+.cta.out{background:linear-gradient(180deg,#26324A 0%,#111A2C 100%);box-shadow:0 14px 28px -12px rgba(15,23,38,.7),inset 0 1px 0 rgba(255,255,255,.18)}
+.cta.quiet{background:var(--paper);color:var(--ink);box-shadow:var(--lift),inset 0 0 0 1px var(--hair)}
+.cta .n{font-size:20px;font-weight:600;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.14)}
+
+/* ===== 카드 공통 ===== */
+.card{background:var(--paper);border-radius:26px;box-shadow:var(--lift)}
+
+/* 이번 주 */
+.week{margin-top:22px;padding:20px 18px 14px}
+.wh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.wh h2{margin:0;font-size:15px;font-weight:700}
+.wh b{font-family:var(--num);font-size:24px;font-weight:600}
+.bars{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.bar{display:grid;grid-template-rows:72px 1px 72px 34px;justify-items:center;cursor:pointer;border-radius:16px;padding-top:6px}
+.bar.today{background:linear-gradient(180deg,rgba(49,87,245,0),rgba(49,87,245,.07))}
+.bar .up,.bar .dn{width:100%;display:flex;flex-direction:column;align-items:center;min-height:0}
+.bar .up{justify-content:flex-end}.bar .dn{justify-content:flex-start}
+.bar i{display:block;width:22px;border-radius:11px;transform-origin:bottom;animation:grow .6s var(--ease) both}
+.bar .dn i{transform-origin:top}
+.bar .up i{background:linear-gradient(180deg,var(--gain2),var(--gain));box-shadow:0 6px 12px -6px rgba(20,163,122,.7)}
+.bar .dn i{background:linear-gradient(0deg,var(--loss2),var(--loss));box-shadow:0 -6px 12px -6px rgba(226,72,77,.6)}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.bar .base{width:100%;background:var(--hair)}
+.bar .lab{font-size:12px;color:var(--slate);align-self:center;font-weight:500}
+.bar.today .lab{color:var(--alpine);font-weight:700}
+.bar .v{font-family:var(--num);font-size:14px;font-weight:600;margin:4px 0}
+.bar .tag{font-size:11px;color:var(--alpine);font-weight:700;margin:4px 0;padding:3px 7px;border-radius:8px;background:rgba(49,87,245,.08)}
+.gain{color:var(--gain)} .loss{color:var(--loss)} .even{color:var(--ink)}
+
+/* 월 기록 */
+.mh{display:flex;align-items:center;justify-content:space-between;margin:30px 4px 4px}
+.mh h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.mh h2 span{color:var(--slate);font-weight:500;font-size:15px;margin-right:6px}
+.pager{display:flex;gap:6px}
+.pager button{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink);background:var(--paper);box-shadow:var(--lift)}
+.pager button:active{transform:scale(.95)}
+.pager svg{width:17px;height:17px}
+.wk{margin-top:16px}
+.wk-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--slate);padding:0 8px 8px}
+.wk-h b{font-family:var(--num);font-size:16px;font-weight:600}
+.rows{overflow:hidden}
+.r{width:100%;display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:6px;padding:14px 18px;text-align:left;position:relative}
+.r + .r::before{content:'';position:absolute;left:64px;right:18px;top:0;height:1px;background:var(--hair)}
+.r:active{background:#F6F8FA}
+.r .dd{font-family:var(--num);font-size:24px;font-weight:600;line-height:1}
+.r .dd small{display:block;font-family:Pretendard,sans-serif;font-size:11px;color:var(--slate);font-weight:500;margin-top:3px}
+.r.sun .dd{color:var(--loss)} .r.sat .dd{color:var(--alpine)}
+.r .tt{font-family:var(--num);font-size:19px;font-weight:500}
+.r .tt.lb{justify-self:start;display:inline-block;font-family:Pretendard,sans-serif;font-size:13px;font-weight:700;color:var(--alpine);padding:4px 10px;border-radius:999px;background:rgba(49,87,245,.08)}
+.r .memo{display:block;font-family:Pretendard,sans-serif;font-size:12px;color:var(--slate);margin-top:2px}
+.r .hv{font-family:var(--num);font-size:16px;font-weight:600;min-width:52px;text-align:center;padding:4px 0;border-radius:10px}
+.r .hv.gain{background:rgba(20,163,122,.1)} .r .hv.loss{background:rgba(226,72,77,.09)} .r .hv.even{background:#F1F3F6;color:var(--slate)}
+.r.rest{padding-top:10px;padding-bottom:10px}
+.r.rest .dd{font-size:17px;color:#AEB7C2}
+.r.rest .dd small{display:inline;margin-left:4px}
+.r.is-today::after{content:'';position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--alpine)}
+.blank{padding:28px 22px;color:var(--slate);font-size:14px;line-height:1.65;margin-top:14px}
+.blank b{color:var(--ink)}
+
+/* 편집 시트 */
+.scrim{position:fixed;inset:0;background:rgba(10,20,48,.32);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:440px;margin:0 auto;background:var(--paper);border-radius:30px 30px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .34s var(--ease);z-index:11;box-shadow:0 -20px 50px -20px rgba(10,20,48,.35)}
+.sheet.on{transform:none}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--hair);margin:0 auto 18px}
+.sheet h3{margin:0 0 16px;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.kinds{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:16px;padding:4px;border-radius:16px;background:#EEF1F5}
+.kinds button{height:38px;border-radius:12px;font-size:13.5px;font-weight:600;color:var(--slate);transition:.2s var(--ease)}
+.kinds button.on{background:var(--paper);color:var(--ink);box-shadow:0 2px 6px -2px rgba(15,23,38,.18)}
+.times{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{background:#F3F5F8;border-radius:18px;padding:11px 15px 9px;min-width:0;overflow:hidden;box-shadow:inset 0 0 0 1px #E8ECF1}
+.field label{display:block;font-size:12px;color:var(--slate)}
+.field input,.field select{width:100%;border:0;background:none;font-family:var(--num);font-size:30px;font-weight:600;color:var(--ink);padding:0;margin-top:2px;color-scheme:light;-webkit-appearance:none;appearance:none;min-width:0;display:block}
+.field select{font-family:Pretendard,sans-serif;font-size:18px;height:40px}
+.field.memo input{font-family:Pretendard,sans-serif;font-size:16px;font-weight:500;height:34px}
+.calc{display:flex;justify-content:space-between;align-items:center;margin:10px 0 12px;padding:12px 16px;border-radius:16px;font-size:13px;color:var(--slate);background:linear-gradient(90deg,#F6F8FB,#EEF2F8)}
+.calc b{font-family:var(--num);font-size:24px;font-weight:600}
+.leaveBox{margin-bottom:10px}
+.acts{display:grid;grid-template-columns:auto 1fr;gap:10px;margin-top:16px}
+.del{height:56px;padding:0 22px;border-radius:28px;color:var(--loss);font-weight:600;background:#FDF1F1}
+.save{height:56px;border-radius:28px;color:#fff;font-weight:700;font-size:16px;background:linear-gradient(180deg,#26324A,#111A2C);box-shadow:0 12px 24px -12px rgba(15,23,38,.7),inset 0 1px 0 rgba(255,255,255,.16)}
+.hide{display:none!important}
+
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-24px);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;transition:.35s var(--ease);z-index:20;pointer-events:none;white-space:nowrap;
+  background:rgba(15,23,38,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 12px 30px -10px rgba(10,20,48,.5)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.busy .cta{opacity:.7;pointer-events:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.seg.on,.ot{opacity:1}}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <section class="hero">
+    <svg class="ridge" viewBox="0 0 400 120" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="rg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A6BE8" stop-opacity=".55"/><stop offset="1" stop-color="#0A1430" stop-opacity="0"/></linearGradient>
+        <linearGradient id="rg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FC2FF" stop-opacity=".3"/><stop offset="1" stop-color="#0A1430" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 78 L38 52 L62 64 L104 26 L132 48 L158 38 L196 70 L236 34 L262 50 L300 18 L338 56 L366 44 L400 66 L400 120 L0 120Z" fill="url(#rg1)"/>
+      <path d="M0 96 L50 74 L84 86 L128 62 L170 84 L214 66 L250 88 L292 70 L330 90 L372 76 L400 86 L400 120 L0 120Z" fill="url(#rg2)"/>
+          </svg>
+
+    <div class="top">
+      <div class="day" id="day">-</div>
+      <div class="tally" id="tally"></div>
+    </div>
+
+    <div class="dial" aria-live="polite">
+      <svg viewBox="0 0 300 300" id="ring" role="img" aria-label="오늘 근무 진행"></svg>
+      <div class="core" id="core"></div>
+    </div>
+
+    <div class="punches">
+      <div class="pc"><span>출근</span><b class="n" id="pIn">-</b></div>
+      <div class="rule"></div>
+      <div class="pc"><span>퇴근</span><b class="n" id="pOut">-</b></div>
+    </div>
+  </section>
+
+  <div class="cta-wrap"><button class="cta" id="cta" onclick="primary()">출근하기</button></div>
+
+  <section class="card week">
+    <div class="wh"><h2>이번 주</h2><b id="wSum">0</b></div>
+    <div class="bars" id="bars"></div>
+  </section>
+
+  <div class="mh">
+    <h2 id="mTitle">-</h2>
+    <div class="pager">
+      <button onclick="shift(-1)" aria-label="이전 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button onclick="shift(1)" aria-label="다음 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+  </div>
+  <div id="list"></div>
+</main>
+
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="eTitle">
+  <div class="grab"></div>
+  <h3 id="eTitle">-</h3>
+  <div class="kinds" id="kinds">
+    <button data-k="work">근무</button><button data-k="am">오전반차</button><button data-k="pm">오후반차</button><button data-k="leave">휴가·휴일</button>
+  </div>
+  <div id="workF">
+    <div class="times">
+      <div class="field"><label for="eIn">출근</label><input type="time" id="eIn"></div>
+      <div class="field"><label for="eOut">퇴근</label><input type="time" id="eOut"></div>
+    </div>
+    <div class="calc"><span id="eRange">시간을 입력하면 인정 시간이 계산돼요</span><b id="eVal"></b></div>
+  </div>
+  <div id="leaveF" class="leaveBox hide">
+    <div class="field"><label for="eLabel">종류</label><select id="eLabel"></select></div>
+  </div>
+  <div class="field memo"><label for="eMemo">메모</label><input id="eMemo" placeholder="회식, 신규입사자 교육"></div>
+  <div class="acts">
+    <button class="del" onclick="removeEntry()">지우기</button>
+    <button class="save" onclick="saveEdit()">시트에 저장</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const GRACE = 5, BASE = 9, HALF = 4;
+const DOW = ['일','월','화','수','목','금','토'];
+let S = null, cur = null, edit = null, kind = 'work';
+
+/* ---------- 서버 호출 (구글 밖에서 열면 데모 모드) ---------- */
+const HAS_GAS = typeof google !== 'undefined' && google.script && google.script.run;
+function call(fn, ...args){
+  document.body.classList.add('busy');
+  const done = () => document.body.classList.remove('busy');
+  return new Promise((ok, no) => {
+    if (!HAS_GAS) { setTimeout(() => { done(); ok(Demo[fn](...args)); }, 200); return; }
+    google.script.run
+      .withSuccessHandler(r => { done(); ok(r); })
+      .withFailureHandler(e => { done(); toast('저장하지 못했어요. ' + e.message); no(e); })[fn](...args);
+  });
+}
+
+/* ---------- 계산 (시트 규칙과 동일) ---------- */
+const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+const toHM = m => Math.floor(m/60) + ':' + String(m%60).padStart(2,'0');
+const roundIn = t => { const s = toMin(t), r = s%30; return r <= GRACE ? s-r : s+(30-r); };
+const roundOut = t => { const e = toMin(t); return e - e%30; };
+const calc = (i, o, half) => (roundOut(o) - roundIn(i))/60 - (half ? HALF : BASE);
+const fmtH = v => v == null ? '' : (v > 0 ? '+' : v < 0 ? '−' : '') + String(Math.abs(Math.round(v*10)/10));
+const tone = v => v == null ? '' : v > 0 ? 'gain' : v < 0 ? 'loss' : 'even';
+const nowMin = () => { const d = new Date(); return d.getHours()*60 + d.getMinutes(); };
+const nowHM = () => toHM(nowMin());
+const ymd = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const todayStr = () => ymd(new Date());
+const isHalf = r => /반차/.test((r && r.memo) || '');
+
+/* ---------- 문자판 ---------- */
+function arcPath(cx, cy, r1, r2, a0, a1){
+  const p = (r, a) => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
+  const [x1,y1] = p(r2,a0), [x2,y2] = p(r2,a1), [x3,y3] = p(r1,a1), [x4,y4] = p(r1,a0);
+  const L = (a1 - a0) > Math.PI ? 1 : 0;
+  return `M${x1} ${y1}A${r2} ${r2} 0 ${L} 1 ${x2} ${y2}L${x3} ${y3}A${r1} ${r1} 0 ${L} 0 ${x4} ${y4}Z`;
+}
+let ringKey = '';
+function drawRing(blocks, filled, live, overtime){
+  const key = [blocks, filled, live, overtime].join('|');
+  if (key === ringKey) return;           // 같은 상태면 다시 그리지 않음(애니메이션 반복 방지)
+  const first = ringKey === '';
+  ringKey = key;
+  const cx = 150, cy = 150, gap = 0.075, step = 2*Math.PI/blocks, top = -Math.PI/2;
+  let s = `<defs>
+    <linearGradient id="gFill" gradientUnits="userSpaceOnUse" x1="40" y1="20" x2="260" y2="280"><stop offset="0" stop-color="#EAF6FF"/><stop offset=".45" stop-color="#8CCBFF"/><stop offset="1" stop-color="#4C74FF"/></linearGradient>
+    <linearGradient id="gOver" gradientUnits="userSpaceOnUse" x1="150" y1="0" x2="150" y2="300"><stop offset="0" stop-color="#A7F3D0"/><stop offset="1" stop-color="#14A37A"/></linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>`;
+  // 1시간 단위 작은 눈금
+  for (let i = 0; i < blocks; i += 2){
+    const a = top + i*step, r = 104;
+    s += `<circle class="hr" cx="${cx + r*Math.cos(a)}" cy="${cy + r*Math.sin(a)}" r="1.6"/>`;
+  }
+  let lit = '';
+  for (let i = 0; i < blocks; i++){
+    const a0 = top + i*step + gap/2, a1 = top + (i+1)*step - gap/2, d = arcPath(cx,cy,114,132,a0,a1);
+    s += `<path class="seg" d="${d}"/>`;
+    if (i < filled) lit += `<path class="seg on" style="animation-delay:${first ? i*45 : 0}ms" d="${d}"/>`;
+    else if (i === filled && live) lit += `<path class="seg now" d="${d}"/>`;
+  }
+  for (let i = 0; i < Math.min(overtime, blocks); i++){
+    const a0 = top + i*step + gap/2, a1 = top + (i+1)*step - gap/2;
+    lit += `<path class="ot" style="animation-delay:${first ? (filled*45 + i*60) : 0}ms" d="${arcPath(cx,cy,139,145,a0,a1)}"/>`;
+  }
+  s += `<g filter="url(#glow)">${lit}</g>`;
+  $('ring').innerHTML = s;
+}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  const t = todayStr(), d = new Date();
+  $('day').innerHTML = (d.getMonth()+1) + '월 ' + d.getDate() + '일<small>' + DOW[d.getDay()] + '요일</small>';
+  const rows = S.rows, today = rows.find(r => r.date === t);
+  const showToday = S.year === d.getFullYear() && S.month === d.getMonth()+1;
+  const monthSum = rows.reduce((a, r) => a + (r.hours || 0), 0);
+  $('tally').innerHTML = S.month + '월 누적 <b>' + fmtH(monthSum) + 'h</b>';
+  $('mTitle').innerHTML = '<span>' + S.year + '</span>' + S.month + '월 기록';
+  if (showToday) renderToday(today);
+  renderWeek(rows, t);
+  renderList(rows, t);
+}
+
+function renderToday(r){
+  const half = isHalf(r), base = half ? HALF : BASE, blocks = base*2;
+  const tin = r && r.in, tout = r && r.out;
+  $('pIn').textContent = tin || '--:--'; $('pIn').className = 'n' + (tin ? '' : ' empty');
+  $('pOut').textContent = tout || '--:--'; $('pOut').className = 'n' + (tout ? '' : ' empty');
+  const cta = $('cta'), core = $('core');
+
+  if (r && r.label){
+    drawRing(18, 0, false, 0);
+    core.innerHTML = `<div class="cap">오늘은</div><div class="big" style="font-family:Pretendard;font-size:44px;font-weight:700;margin-top:8px">${esc(r.label)}</div><div class="sub">근무 시간 계산에서 빠져요</div>`;
+    cta.className = 'cta quiet'; cta.textContent = '오늘 기록 고치기'; return;
+  }
+  if (!tin){
+    drawRing(18, 0, false, 0);
+    core.innerHTML = `<div class="cap">현재 시각</div><div class="big" style="font-size:66px">${nowHM()}</div><div class="sub">30분마다 한 칸씩 채워져요</div>`;
+    cta.className = 'cta'; cta.textContent = '출근하기'; return;
+  }
+  const start = roundIn(tin), target = start + base*60;
+  const endMin = tout ? roundOut(tout) : nowMin() - nowMin()%30;
+  const credited = Math.max(0, (endMin - start)/30);
+  const v = tout ? (r.hours != null ? r.hours : calc(tin, tout, half)) : (endMin - start)/60 - base;
+  drawRing(blocks, Math.min(blocks, credited), !tout, Math.max(0, credited - blocks));
+  const big = `<div class="big ${tone(v)}">${fmtH(v) || '0'}<span class="unit">h</span></div>`;
+  if (tout){
+    core.innerHTML = `<div class="cap">오늘 근무 결과</div>${big}<div class="sub"><b>${toHM(start)}–${toHM(roundOut(tout))}</b> 인정</div>`;
+    cta.className = 'cta quiet'; cta.textContent = '퇴근 시간 고치기';
+  } else {
+    const sub = target > nowMin() ? `<b>${toHM(target)}</b> 퇴근 시 ±0` : `<b>${toHM(target)}</b>부터 초과근무`;
+    core.innerHTML = `<div class="cap">지금 퇴근하면</div>${big}<div class="sub">${sub}</div>`;
+    cta.className = 'cta out'; cta.innerHTML = '퇴근하기 <span class="n">' + nowHM() + '</span>';
+  }
+}
+
+function weekOf(ds){ const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() - (d.getDay()+6)%7); return ymd(d); }
+
+function renderWeek(rows, t){
+  const anchor = rows.some(r => r.date === t) ? t : ((rows.filter(r => r.in || r.label).pop() || rows[0] || {}).date);
+  if (!anchor){ $('bars').innerHTML = ''; return; }
+  const mon = new Date(weekOf(anchor) + 'T00:00:00');
+  const days = [];
+  for (let i = 0; i < 5; i++){ const d = new Date(mon); d.setDate(mon.getDate()+i); days.push({ d, ds: ymd(d), r: rows.find(x => x.date === ymd(d)) }); }
+  const max = Math.max(2, ...days.map(o => Math.abs((o.r && o.r.hours) || 0)));
+  let sum = 0;
+  $('bars').innerHTML = days.map((o, k) => {
+    const r = o.r, h = r ? r.hours : null; sum += h || 0;
+    const px = h ? Math.max(8, Math.round(Math.abs(h)/max*48)) : 0;
+    const val = `<span class="v ${tone(h)}">${fmtH(h) || '0'}</span>`;
+    const bar = `<i style="height:${px}px;animation-delay:${k*70}ms"></i>`;
+    let up = '', dn = '';
+    if (r && r.label) up = `<span class="tag">${esc(r.label)}</span>`;
+    else if (h > 0) up = val + bar;
+    else if (h < 0) dn = bar + val;
+    else if (h === 0) up = val;
+    return `<div class="bar ${o.ds === t ? 'today' : ''}" onclick="openSheet('${o.ds}')"><div class="up">${up}</div><div class="base"></div><div class="dn">${dn}</div><div class="lab">${DOW[o.d.getDay()]} ${o.d.getDate()}</div></div>`;
+  }).join('');
+  $('wSum').textContent = fmtH(sum) + 'h'; $('wSum').className = tone(sum);
+}
+
+function renderList(rows, t){
+  const L = $('list');
+  if (!S.exists){
+    L.innerHTML = `<div class="card blank">아직 <b>${S.sheetName}</b> 탭이 없어요. 이 달에 처음 기록하면 지난달 탭을 복사해서 새로 만들어요.</div>`;
+    return;
+  }
+  const weeks = [];
+  rows.forEach(r => { const k = weekOf(r.date); let w = weeks[weeks.length-1]; if (!w || w.k !== k) weeks.push(w = {k, rows:[]}); w.rows.push(r); });
+  L.innerHTML = weeks.reverse().map(w => {
+    const sum = w.rows.reduce((a, r) => a + (r.hours || 0), 0);
+    const has = w.rows.some(r => r.hours != null);
+    const first = Number(w.rows[0].date.slice(8)), last = Number(w.rows[w.rows.length-1].date.slice(8));
+    const items = w.rows.slice().reverse().map(r => rowHTML(r, t)).join('');
+    return `<div class="wk"><div class="wk-h"><span>${first === last ? first + '일' : first + '일 – ' + last + '일'}</span>${has ? `<b class="${tone(sum)}">${fmtH(sum) || '0'}h</b>` : ''}</div><div class="card rows">${items}</div></div>`;
+  }).join('');
+}
+
+function rowHTML(r, t){
+  const day = Number(r.date.slice(8)), we = r.dow === 0 || r.dow === 6;
+  const empty = !r.in && !r.out && !r.label, future = r.date > t;
+  const c = ['r', r.dow === 0 ? 'sun' : r.dow === 6 ? 'sat' : '', (we || future) && empty ? 'rest' : '', r.date === t ? 'is-today' : ''].join(' ');
+  if ((we || future) && empty) return `<button class="${c}" onclick="openSheet('${r.date}')"><span class="dd">${day}<small>${DOW[r.dow]}</small></span><span></span><span></span></button>`;
+  let mid = '';
+  if (r.label) mid = `<span style="justify-self:start" class="tt lb">${esc(r.label)}</span>`;
+  else if (r.in || r.out) mid = `<span class="tt">${r.in || '--:--'} – ${r.out || '--:--'}</span>`;
+  else mid = `<span class="tt" style="color:#AEB7C2;font-family:Pretendard;font-size:14px">기록 없음</span>`;
+  if (r.memo) mid = `<span>${mid}<span class="memo">${esc(r.memo.replace(/^\*/, ''))}</span></span>`;
+  const hv = r.hours == null ? '<span></span>' : `<span class="hv ${tone(r.hours)}">${fmtH(r.hours) || '0'}</span>`;
+  return `<button class="${c}" onclick="openSheet('${r.date}')"><span class="dd">${day}<small>${DOW[r.dow]}</small></span>${mid}${hv}</button>`;
+}
+
+/* ---------- 동작 ---------- */
+async function load(y, m){ S = await call('getMonth', y || null, m || null); cur = {year:S.year, month:S.month}; render(); }
+function shift(n){ let y = cur.year, m = cur.month + n; if (m < 1){ m = 12; y--; } if (m > 12){ m = 1; y++; } load(y, m); }
+
+async function primary(){
+  const t = todayStr();
+  const today = S && S.rows.find(r => r.date === t);
+  if (today && (today.label || today.out)) { openToday(); return; }
+  const type = today && today.in ? 'out' : 'in';
+  if (navigator.vibrate) navigator.vibrate(25);
+  const at = nowHM();
+  S = await call(type === 'in' ? 'clockIn' : 'clockOut');
+  cur = {year:S.year, month:S.month}; render();
+  toast(type === 'in' ? at + ' 출근 기록됨' : at + ' 퇴근 기록됨');
+}
+async function openToday(){
+  const d = new Date();
+  if (cur.year !== d.getFullYear() || cur.month !== d.getMonth()+1) await load();
+  openSheet(todayStr());
+}
+
+function openSheet(date){
+  edit = S.rows.find(r => r.date === date);
+  if (!edit) return;
+  const d = new Date(date + 'T00:00:00');
+  $('eTitle').textContent = (d.getMonth()+1) + '월 ' + d.getDate() + '일 ' + DOW[d.getDay()] + '요일';
+  $('eIn').value = pad(edit.in); $('eOut').value = pad(edit.out);
+  const memo = edit.memo || '';
+  kind = edit.label ? 'leave' : /오전반차/.test(memo) ? 'am' : /오후반차/.test(memo) ? 'pm' : 'work';
+  $('eMemo').value = memo.replace(/\*?오[전후]반차\s?/, '').replace(/^\*/, '');
+  const opts = S.leaveTypes.slice(); if (edit.label && !opts.includes(edit.label)) opts.push(edit.label);
+  $('eLabel').innerHTML = opts.map(l => `<option${l === edit.label ? ' selected' : ''}>${l}</option>`).join('');
+  setKind(kind);
+  $('scrim').classList.add('on'); $('sheet').classList.add('on');
+}
+function closeSheet(){ $('scrim').classList.remove('on'); $('sheet').classList.remove('on'); }
+function setKind(k){
+  kind = k;
+  document.querySelectorAll('#kinds button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  $('workF').classList.toggle('hide', k === 'leave'); $('leaveF').classList.toggle('hide', k !== 'leave');
+  preview();
+}
+function preview(){
+  const i = $('eIn').value, o = $('eOut').value;
+  if (i && o){
+    const v = calc(i, o, kind === 'am' || kind === 'pm');
+    $('eRange').textContent = toHM(roundIn(i)) + ' – ' + toHM(roundOut(o)) + ' 인정';
+    $('eVal').textContent = fmtH(v) + 'h'; $('eVal').className = tone(v);
+  } else { $('eRange').textContent = '시간을 입력하면 인정 시간이 계산돼요'; $('eVal').textContent = ''; }
+}
+async function saveEdit(){
+  const opt = { kind, memo: $('eMemo').value.trim() };
+  if (kind === 'leave') opt.label = $('eLabel').value;
+  const lv = kind === 'leave';
+  S = await call('saveEntry', edit.date, lv ? null : unpad($('eIn').value), lv ? null : unpad($('eOut').value), opt);
+  closeSheet(); render(); toast('시트에 저장됨');
+}
+async function removeEntry(){
+  if (!confirm('이 날의 기록을 지울까요?')) return;
+  S = await call('clearEntry', edit.date); closeSheet(); render(); toast('기록을 지웠어요');
+}
+
+/* ---------- 유틸 ---------- */
+function $(id){ return document.getElementById(id); }
+function pad(t){ if (!t) return ''; const [h,m] = t.split(':'); return h.padStart(2,'0') + ':' + m; }
+function unpad(t){ if (!t) return ''; const [h,m] = t.split(':'); return Number(h) + ':' + m; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+let tt; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2000); }
+
+document.querySelectorAll('#kinds button').forEach(b => b.onclick = () => setKind(b.dataset.k));
+$('eIn').oninput = preview; $('eOut').oninput = preview;
+document.addEventListener('visibilitychange', () => { if (!document.hidden && cur) load(cur.year, cur.month); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+setInterval(() => { if (S) render(); }, 30000);
+
+/* ---------- 데모 데이터 (구글 시트 밖에서 열었을 때만) ---------- */
+const Demo = (() => {
+  const d = new Date(), y = d.getFullYear(), m = d.getMonth()+1, days = new Date(y, m, 0).getDate();
+  const rows = [];
+  const sample = [['9:12','17:31'],['8:31','19:32'],['8:59','18:41'],['9:03','18:31'],['8:11','17:43'],['9:07','16:31']];
+  for (let i = 1; i <= days; i++){
+    const dt = new Date(y, m-1, i), ds = ymd(dt);
+    const r = { date: ds, dow: dt.getDay(), in:'', out:'', hours:null, label:'', memo:'' };
+    if (i < d.getDate() && r.dow > 0 && r.dow < 6){ const s = sample[i % 6]; r.in = s[0]; r.out = s[1]; r.hours = calc(s[0], s[1]); }
+    if (i === 3){ Object.assign(r, {in:'', out:'', hours:null, label:'연차'}); }
+    if (i === 12 && r.dow > 0 && r.dow < 6) r.memo = '회식';
+    if (i === d.getDate() && /active/.test(location.search)) r.in = '9:03';
+    rows.push(r);
+  }
+  const st = () => ({ year:y, month:m, sheetName: String(y).slice(2)+'-'+String(m).padStart(2,'0')+'월 근무시간', exists:true, rows: JSON.parse(JSON.stringify(rows)), leaveTypes:['연차','공휴일','대체휴일','출장','교육','산행','워크샵','경조사','기타'] });
+  const find = ds => rows.find(r => r.date === ds);
+  return {
+    getMonth: () => st(),
+    clockIn: () => { find(todayStr()).in = nowHM(); return st(); },
+    clockOut: () => { const r = find(todayStr()); r.out = nowHM(); r.hours = calc(r.in, r.out, isHalf(r)); return st(); },
+    saveEntry: (ds, i, o, opt) => { const r = find(ds);
+      if (opt.kind === 'leave') Object.assign(r, {in:'', out:'', hours:null, label:opt.label, memo:opt.memo});
+      else { const half = opt.kind === 'am' || opt.kind === 'pm';
+        Object.assign(r, {label:'', in:i, out:o, memo:(opt.kind==='am'?'*오전반차 ':opt.kind==='pm'?'*오후반차 ':'') + (opt.memo||''), hours: i && o ? calc(i, o, half) : null}); }
+      return st(); },
+    clearEntry: ds => { Object.assign(find(ds), {in:'', out:'', hours:null, label:'', memo:''}); return st(); }
+  };
+})();
+
+load();
+</script>
+</body>
+</html>
