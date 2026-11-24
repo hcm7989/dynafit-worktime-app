@@ -32,6 +32,8 @@
 | `Code.gs` | 시트 읽기·쓰기, 출퇴근 기록, 휴가 처리, 월 탭 자동 생성 |
 | `Index.html` | 모바일 화면. 구글 밖에서 열면 예시 데이터로 동작합니다 |
 | `appsscript.json` | 프로젝트 설정 (서울 시간대, 웹 앱 권한: 나만) |
+| `.github/workflows/deploy.yml` | GitHub Actions 자동 배포 (clasp) |
+| `.claspignore` | clasp가 올릴 파일 지정 |
 
 ## 설치
 
@@ -45,7 +47,40 @@
 
 ### 업데이트
 
-코드를 바꾼 뒤 **배포 → 배포 관리 → 수정 → 버전: 새 버전**으로 다시 배포하면 폰 주소는 그대로 유지됩니다.
+자동 배포를 설정해 두면 `main`에 `Code.gs`, `Index.html`, `appsscript.json` 변경이 올라갈 때마다 GitHub Actions가 Apps Script에 업로드하고 웹 앱을 새 버전으로 갱신합니다. 폰 주소는 그대로입니다.
+자동 배포 없이 할 때는 Apps Script에 코드를 붙여넣고 **배포 → 배포 관리 → 수정 → 버전: 새 버전**으로 다시 배포합니다.
+
+## 자동 배포 설정 (처음 한 번)
+
+GitHub 저장소의 **Settings → Secrets and variables → Actions → New repository secret**에 아래 3개를 등록합니다.
+
+| 시크릿 이름 | 값 | 찾는 곳 |
+|---|---|---|
+| `SCRIPT_ID` | Apps Script 프로젝트 ID | Apps Script 편집기 **프로젝트 설정(톱니바퀴) → ID → 스크립트 ID** |
+| `DEPLOYMENT_ID` | 지금 쓰는 웹 앱 배포 ID (`AKfycb…`) | **배포 → 배포 관리** → 활성 웹 앱 배포의 **배포 ID** |
+| `CLASPRC_JSON` | clasp 로그인 정보 파일 내용 전체 | 아래 순서로 만듭니다 |
+
+`CLASPRC_JSON` 만들기:
+
+1. https://script.google.com/home/usersettings 에서 **Google Apps Script API**를 **사용**으로 켭니다.
+2. PC에 Node.js(LTS)가 없다면 https://nodejs.org 에서 설치합니다.
+3. 터미널(맥) 또는 PowerShell(윈도우)에서 실행합니다.
+   ```
+   npx @google/clasp@2.4.2 login
+   ```
+   브라우저가 열리면 시트를 소유한 구글 계정으로 로그인하고 허용합니다.
+4. 생성된 파일을 열어 내용 전체를 복사해 `CLASPRC_JSON` 값으로 붙여넣습니다.
+   - 맥: `~/.clasprc.json` (터미널에서 `cat ~/.clasprc.json | pbcopy`로 복사)
+   - 윈도우: `C:\Users\사용자이름\.clasprc.json` (PowerShell에서 `Get-Content $HOME\.clasprc.json | Set-Clipboard`)
+
+등록 후 **Actions → Apps Script 배포 → Run workflow**로 한 번 실행해 초록색 체크가 뜨면 완료입니다.
+시크릿이 없으면 워크플로는 실패하지 않고 경고만 남기고 건너뜁니다.
+
+> `CLASPRC_JSON`은 내 구글 계정으로 Apps Script를 수정할 수 있는 열쇠입니다. 저장소 시크릿에만 넣고 파일로 커밋하지 마세요. 노출됐다고 생각되면 https://myaccount.google.com/permissions 에서 clasp 접근 권한을 삭제하고 다시 로그인하면 됩니다.
+
+### clasp가 올리는 파일
+
+`.claspignore`로 `Code.gs`, `Index.html`, `appsscript.json` 세 파일만 올립니다. Apps Script 쪽 프로젝트는 이 세 파일로 덮어써지므로, 편집기에서 직접 고친 내용은 GitHub에도 반영해 두세요.
 
 ## 시트 구조 (기존 양식 그대로)
 

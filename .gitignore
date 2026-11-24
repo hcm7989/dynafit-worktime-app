@@ -1,0 +1,4 @@
+# clasp 인증 정보와 프로젝트 연결 파일은 올리지 않습니다
+.clasprc.json
+.clasp.json
+node_modules/
