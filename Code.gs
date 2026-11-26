@@ -13,7 +13,9 @@
  */
 
 // ===== 설정 =====
-const SPREADSHEET_ID = '13rlJpgXyPd04nAD396MD-WTtjT5_-bpcCJs24Iuhh7U';
+// 시트에서 '확장 프로그램 → Apps Script'로 만든 프로젝트면 그 시트를 자동으로 씁니다.
+// 별도 프로젝트라면 스크립트 속성 SPREADSHEET_ID에 시트 ID를 넣으세요.
+const PAGES_URL = 'https://hcm7989.github.io/dynafit-worktime-app/';
 const TZ = 'Asia/Seoul';
 const GRACE_MIN = 5;      // 출근 유예(분)
 const BASE_HOURS = 9;     // 기준 근무시간(점심 포함)
@@ -25,14 +27,71 @@ const COL = { date: 2, in: 3, out: 4, hours: 5, week: 6, memo: 7 };
 const LEAVE_TYPES = ['연차', '공휴일', '대체휴일', '출장', '교육', '산행', '워크샵', '경조사', '기타'];
 
 // ===== 웹앱 진입점 =====
-function doGet() {
+// 브라우저로 직접 열면 Apps Script 화면(안내 문구 있음), GitHub Pages 앱은 doPost API를 씁니다.
+function doGet(e) {
+  // '모든 사용자' 권한으로 배포되므로 비밀 키가 맞을 때만 Apps Script 화면을 보여줍니다.
+  const key = PropertiesService.getScriptProperties().getProperty('API_KEY');
+  if (!key || !e || !e.parameter || e.parameter.k !== key) {
+    return HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><p style="font-family:sans-serif;padding:24px;line-height:1.6">근무시간 앱 서버예요.<br>휴대폰 홈 화면의 앱이나 설치 링크로 열어주세요.</p>').setTitle('DYNAFIT 근무');
+  }
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('DYNAFIT 근무')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// ===== 클라이언트에서 호출하는 API =====
+// ===== GitHub Pages 앱용 API =====
+// 요청: POST text/plain {"key":"비밀 키","fn":"getMonth","args":[...]}
+// 응답: {"ok":true,"data":...} 또는 {"ok":false,"error":"..."}
+const API_FUNCS = { getMonth: getMonth, clockIn: clockIn, clockOut: clockOut, saveEntry: saveEntry, clearEntry: clearEntry };
+
+function doPost(e) {
+  let out;
+  try {
+    const req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    const key = PropertiesService.getScriptProperties().getProperty('API_KEY');
+    if (!key) throw new Error('비밀 키가 아직 없어요. Apps Script에서 setupApp을 실행하세요.');
+    if (req.key !== key) throw new Error('비밀 키가 맞지 않아요. 설치 링크로 다시 열어주세요.');
+    const fn = API_FUNCS[req.fn];
+    if (!fn) throw new Error('알 수 없는 요청: ' + req.fn);
+    out = { ok: true, data: fn.apply(null, req.args || []) };
+  } catch (err) {
+    out = { ok: false, error: String(err && err.message || err) };
+  }
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * 처음 한 번 실행: 비밀 키를 만들고 폰에서 열 설치 링크를 로그에 보여줍니다.
+ * 웹 앱을 '모든 사용자' 권한으로 배포한 뒤 실행하세요. 키를 바꾸려면 resetKey를 실행하세요.
+ */
+function setupApp() {
+  const props = PropertiesService.getScriptProperties();
+  let key = props.getProperty('API_KEY');
+  if (!key) { key = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); props.setProperty('API_KEY', key); }
+  const url = ScriptApp.getService().getUrl();
+  if (!url) { Logger.log('먼저 배포 → 새 배포 → 웹 앱으로 배포한 뒤 다시 실행하세요.'); return; }
+  const link = PAGES_URL + '#u=' + encodeURIComponent(url) + '&k=' + key;
+  Logger.log('아래 설치 링크를 폰으로 보내서 여세요 (다른 사람에게 보내지 마세요):');
+  Logger.log(link);
+  Logger.log('시트 확인: ' + getSS().getName() + ' / 계산 테스트 9:03~18:31 → ' + calcHours('9:03', '18:31') + ' (기대값 0.5)');
+}
+
+/** 비밀 키를 새로 만들어 예전 설치 링크를 무효로 합니다 */
+function resetKey() {
+  PropertiesService.getScriptProperties().deleteProperty('API_KEY');
+  setupApp();
+}
+
+function getSS() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) return ss;
+  const id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  if (!id) throw new Error('연결된 시트를 찾지 못했어요. 스크립트 속성 SPREADSHEET_ID를 넣어주세요.');
+  return SpreadsheetApp.openById(id);
+}
+
+// ===== 화면에서 호출하는 기능 =====
 
 /** 월 데이터 + 오늘 상태 */
 function getMonth(year, month) {
@@ -195,7 +254,7 @@ function sheetNameOf(y, m) {
 }
 
 function getMonthSheet(y, m, create) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const ss = getSS();
   let sh = ss.getSheetByName(sheetNameOf(y, m));
   if (!sh && create) sh = createMonthSheet(ss, y, m);
   return sh;

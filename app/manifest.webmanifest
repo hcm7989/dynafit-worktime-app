@@ -1,0 +1,13 @@
+{
+  "name": "DYNAFIT 근무",
+  "short_name": "근무",
+  "description": "구글 시트와 연동되는 근무시간 기록 앱",
+  "display": "standalone",
+  "background_color": "#F3F5F8",
+  "theme_color": "#F3F5F8",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
