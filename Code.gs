@@ -34,10 +34,10 @@ function doGet(e) {
   // '모든 사용자' 권한으로 배포되므로 비밀 키가 맞을 때만 Apps Script 화면을 보여줍니다.
   const key = PropertiesService.getScriptProperties().getProperty('API_KEY');
   if (!key || !e || !e.parameter || e.parameter.k !== key) {
-    return HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><p style="font-family:sans-serif;padding:24px;line-height:1.6">근무시간 앱 서버예요.<br>휴대폰 홈 화면의 앱이나 설치 링크로 열어주세요.</p>').setTitle('DYNAFIT 근무');
+    return HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><p style="font-family:sans-serif;padding:24px;line-height:1.6">근무시간 앱 서버예요.<br>휴대폰 홈 화면의 앱이나 설치 링크로 열어주세요.</p>').setTitle('WorkPace');
   }
   return HtmlService.createHtmlOutputFromFile('Index')
-    .setTitle('DYNAFIT 근무')
+    .setTitle('WorkPace')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
