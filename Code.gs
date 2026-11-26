@@ -16,6 +16,8 @@
 // 시트에서 '확장 프로그램 → Apps Script'로 만든 프로젝트면 그 시트를 자동으로 씁니다.
 // 별도 프로젝트라면 스크립트 속성 SPREADSHEET_ID에 시트 ID를 넣으세요.
 const PAGES_URL = 'https://hcm7989.github.io/dynafit-worktime-app/';
+// 배포 → 배포 관리의 웹 앱 URL(/exec로 끝남). 편집기에서 실행하면 테스트용 /dev 주소만 알 수 있어서 여기에 적어 둡니다.
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzJQdhX5sSNqhQtfbLiJK24ajvRexD77CKzyZXsm6Z1zsqUCrrXkkN0OLDukACxG9ti/exec';
 const TZ = 'Asia/Seoul';
 const GRACE_MIN = 5;      // 출근 유예(분)
 const BASE_HOURS = 9;     // 기준 근무시간(점심 포함)
@@ -69,8 +71,8 @@ function setupApp() {
   const props = PropertiesService.getScriptProperties();
   let key = props.getProperty('API_KEY');
   if (!key) { key = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 8); props.setProperty('API_KEY', key); }
-  const url = ScriptApp.getService().getUrl();
-  if (!url) { Logger.log('먼저 배포 → 새 배포 → 웹 앱으로 배포한 뒤 다시 실행하세요.'); return; }
+  const url = WEBAPP_URL || ScriptApp.getService().getUrl();
+  if (!url || /\/dev$/.test(url)) { Logger.log('Code.gs 맨 위 WEBAPP_URL에 배포 관리의 웹 앱 URL(/exec로 끝나는 주소)을 넣고 다시 실행하세요.'); return; }
   const link = PAGES_URL + '#u=' + encodeURIComponent(url) + '&k=' + key;
   Logger.log('아래 설치 링크를 폰으로 보내서 여세요 (다른 사람에게 보내지 마세요):');
   Logger.log(link);
