@@ -2,6 +2,7 @@ name: 앱 화면 배포 (GitHub Pages)
 
 # main에 화면 코드가 바뀌면 https://hcm7989.github.io/dynafit-worktime-app/ 로 배포합니다.
 # 처음 한 번: 저장소 Settings → Pages → Source를 "GitHub Actions"로 바꿔야 합니다.
+# 수동 실행: Actions 탭 왼쪽 목록에서 이 워크플로를 고르고 Run workflow.
 on:
   push:
     branches: [main]
